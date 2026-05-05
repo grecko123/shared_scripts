@@ -185,22 +185,51 @@ success "Git identity: $(git config --global user.name) <$(git config --global u
 
 header "Step 4 / 5 — Initialize a git repository"
 
-DEFAULT_DIR="$(basename "$PWD")"
-
-echo "Where would you like to create the project?"
+echo "Where is the project you want to put on GitHub?"
 echo ""
-echo "  1) Use the current directory: ${CYAN}$PWD${NC}"
-echo "  2) Create a new folder"
+echo "  1) I already have a folder with my files"
+echo "  2) I want to create a new, empty project"
 echo ""
-echo -en "${BOLD}Choice${NC} (1/2) [1]: "
+echo -en "${BOLD}Choice${NC} (1/2): "
 read -r dir_choice
-dir_choice="${dir_choice:-1}"
 
 if [[ "$dir_choice" == "2" ]]; then
-    ask "Folder name" PROJECT_DIR
+    echo ""
+    ask "What do you want to call the project?" PROJECT_DIR
+    PROJECT_DIR="${HOME}/${PROJECT_DIR}"
     mkdir -p "$PROJECT_DIR"
     cd "$PROJECT_DIR"
-    success "Created and moved into $PWD"
+    success "Created new project folder: $PWD"
+else
+    echo ""
+    echo "  Drag your project folder from Finder into this window,"
+    echo "  or type the path (e.g. ~/Desktop/my-project)."
+    echo ""
+    echo -en "${BOLD}Project folder${NC}: "
+    read -r project_path
+
+    # Strip quotes and trailing spaces from drag-and-drop
+    project_path="${project_path%\'}"
+    project_path="${project_path#\'}"
+    project_path="${project_path%\"}"
+    project_path="${project_path#\"}"
+    project_path="${project_path%% }"
+
+    # Expand ~ if they typed it
+    project_path="${project_path/#\~/$HOME}"
+
+    if [[ -z "$project_path" ]]; then
+        fail "No path entered."
+        exit 1
+    fi
+
+    if [[ ! -d "$project_path" ]]; then
+        fail "\"$project_path\" doesn't exist or isn't a folder. Check the path and try again."
+        exit 1
+    fi
+
+    cd "$project_path"
+    success "Using project folder: $PWD"
 fi
 
 if [[ -d .git ]]; then

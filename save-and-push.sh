@@ -23,8 +23,38 @@ if ! command -v git &>/dev/null; then
     fail "git is not installed. Run github-quickstart.sh first."
 fi
 
+# ─── Find the project ───────────────────────────────────────────────────────
+
 if [[ ! -d .git ]]; then
-    fail "This folder is not a git project. cd into your project folder first."
+    echo ""
+    info "This folder ($(pwd)) doesn't look like a git project."
+    echo ""
+    echo -en "${BOLD}Where is your project folder?${NC} (drag the folder here or type the path): "
+    read -r project_path
+
+    # Strip quotes that macOS drag-and-drop sometimes adds
+    project_path="${project_path%\'}"
+    project_path="${project_path#\'}"
+    project_path="${project_path%\"}"
+    project_path="${project_path#\"}"
+    # Trim trailing spaces from drag-and-drop
+    project_path="${project_path%% }"
+
+    if [[ -z "$project_path" ]]; then
+        fail "No path entered."
+    fi
+
+    if [[ ! -d "$project_path" ]]; then
+        fail "\"$project_path\" is not a folder. Check the path and try again."
+    fi
+
+    cd "$project_path"
+
+    if [[ ! -d .git ]]; then
+        fail "\"$project_path\" exists but isn't a git project. Run github-quickstart.sh on it first."
+    fi
+
+    success "Using project: $PWD"
 fi
 
 if ! git remote get-url origin &>/dev/null; then
